@@ -44,19 +44,20 @@
 
   // Export a clean PNG: render the whole island fitted into the frame on an
   // offscreen high-res canvas (independent of the current on-screen pan/zoom).
+  // Export a crisp PNG: render the whole world fitted into a high-resolution
+  // square frame on an offscreen canvas (independent of on-screen pan/zoom).
   async function exportPng() {
     if (!store.map) return;
-    const EW = 2000;
-    const aspect = cw > 0 ? ch / cw : 0.75;
-    const EH = Math.round(EW * aspect);
+    const PX_PER_UNIT = 3.5;            // high render density -> sharp output
+    const margin = Math.round(WORLD * PX_PER_UNIT * 0.03);
+    const E = Math.round(WORLD * PX_PER_UNIT + margin * 2); // square frame
     const out = document.createElement('canvas');
-    out.width = EW; out.height = EH;
+    out.width = E; out.height = E;
     const octx = out.getContext('2d');
+    octx.imageSmoothingEnabled = true;
+    octx.imageSmoothingQuality = 'high';
 
-    // fit the world into the export frame with a small margin
-    const pad = 0.04 * Math.min(EW, EH);
-    const s = Math.min((EW - pad * 2) / WORLD, (EH - pad * 2) / WORLD);
-    const view = { scale: s, x: (EW - WORLD * s) / 2, y: (EH - WORLD * s) / 2 };
+    const view = { scale: PX_PER_UNIT, x: margin, y: margin };
     draw(octx, store.map, view, { ...store.options, styleId: store.style, revision: store.revision, styleRev: store.themeRev || 0, dpr: 1 });
 
     const loadImg = (svg) => new Promise((res) => {
@@ -67,23 +68,25 @@
     });
     const px = (p) => p.x * view.scale + view.x;
     const py = (p) => p.y * view.scale + view.y;
-    const SZ = 30;
+    const SZ = Math.round(PX_PER_UNIT * 9);
+    const fontPx = Math.round(PX_PER_UNIT * 4.5);
     const fontFam = pinStyle.font.split(',')[0].split(' ').slice(-1)[0] || 'sans-serif';
     const mono = pinStyle.monochrome;
     for (const pin of store.pins) {
       const col = mono || colorOf(pin.type);
+      // request the SVG at the target raster size so it isn't upscaled/blurry
       const svg = iconSvg(pin.type, SZ).replace(/currentColor/g, col);
       const img = await loadImg(svg);
       const x = px(pin), y = py(pin);
       if (img) octx.drawImage(img, x - SZ / 2, y - SZ, SZ, SZ);
       if (pin.label) {
-        octx.font = `13px ${fontFam}`;
+        octx.font = `${fontPx}px ${fontFam}`;
         octx.textAlign = 'center';
-        octx.lineWidth = 3;
+        octx.lineWidth = Math.max(2, fontPx * 0.25);
         octx.strokeStyle = pinStyle.shadow ? '#000' : 'rgba(255,255,255,0.6)';
         octx.fillStyle = pinStyle.labelColor;
-        octx.strokeText(pin.label, x, y + 13);
-        octx.fillText(pin.label, x, y + 13);
+        octx.strokeText(pin.label, x, y + fontPx);
+        octx.fillText(pin.label, x, y + fontPx);
       }
     }
 
@@ -92,7 +95,7 @@
       const a = document.createElement('a');
       a.href = url; a.download = `island-${store.params.seed}.png`; a.click();
       URL.revokeObjectURL(url);
-    });
+    }, 'image/png');
   }
 
   onMount(() => {
