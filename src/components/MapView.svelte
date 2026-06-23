@@ -42,37 +42,51 @@
     if (ctx && store.map) draw(ctx, store.map, store.view, { ...store.options, styleId: store.style, revision: store.revision, styleRev: store.themeRev || 0, dpr });
   }
 
+  // Export a clean PNG: render the whole island fitted into the frame on an
+  // offscreen high-res canvas (independent of the current on-screen pan/zoom).
   async function exportPng() {
     if (!store.map) return;
-    render();
+    const EW = 2000;
+    const aspect = cw > 0 ? ch / cw : 0.75;
+    const EH = Math.round(EW * aspect);
     const out = document.createElement('canvas');
-    out.width = canvas.width; out.height = canvas.height;
+    out.width = EW; out.height = EH;
     const octx = out.getContext('2d');
-    octx.drawImage(canvas, 0, 0);
+
+    // fit the world into the export frame with a small margin
+    const pad = 0.04 * Math.min(EW, EH);
+    const s = Math.min((EW - pad * 2) / WORLD, (EH - pad * 2) / WORLD);
+    const view = { scale: s, x: (EW - WORLD * s) / 2, y: (EH - WORLD * s) / 2 };
+    draw(octx, store.map, view, { ...store.options, styleId: store.style, revision: store.revision, styleRev: store.themeRev || 0, dpr: 1 });
+
     const loadImg = (svg) => new Promise((res) => {
       const img = new Image();
       img.onload = () => res(img);
       img.onerror = () => res(null);
       img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
     });
-    const SZ = 26;
+    const px = (p) => p.x * view.scale + view.x;
+    const py = (p) => p.y * view.scale + view.y;
+    const SZ = 30;
+    const fontFam = pinStyle.font.split(',')[0].split(' ').slice(-1)[0] || 'sans-serif';
     const mono = pinStyle.monochrome;
     for (const pin of store.pins) {
       const col = mono || colorOf(pin.type);
       const svg = iconSvg(pin.type, SZ).replace(/currentColor/g, col);
       const img = await loadImg(svg);
-      const x = sx(pin) * dpr, y = sy(pin) * dpr;
-      if (img) octx.drawImage(img, x - (SZ / 2) * dpr, y - SZ * dpr, SZ * dpr, SZ * dpr);
+      const x = px(pin), y = py(pin);
+      if (img) octx.drawImage(img, x - SZ / 2, y - SZ, SZ, SZ);
       if (pin.label) {
-        octx.font = `${12 * dpr}px ${pinStyle.font.split(' ').slice(-1)[0] || 'sans-serif'}`;
+        octx.font = `13px ${fontFam}`;
         octx.textAlign = 'center';
-        octx.lineWidth = 3 * dpr;
+        octx.lineWidth = 3;
         octx.strokeStyle = pinStyle.shadow ? '#000' : 'rgba(255,255,255,0.6)';
         octx.fillStyle = pinStyle.labelColor;
-        octx.strokeText(pin.label, x, y + 12 * dpr);
-        octx.fillText(pin.label, x, y + 12 * dpr);
+        octx.strokeText(pin.label, x, y + 13);
+        octx.fillText(pin.label, x, y + 13);
       }
     }
+
     out.toBlob((blob) => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
