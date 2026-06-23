@@ -6,6 +6,7 @@
 // again by revision (terrain edits) and style id. Pan/zoom never recomputes them.
 
 import { getStyle, styleColor } from './styles.js';
+import { makePattern } from './texture.js';
 
 const cache = new WeakMap();
 
@@ -120,7 +121,17 @@ export function draw(ctx, map, view, options = {}) {
   ctx.translate(view.x, view.y);
   ctx.scale(view.scale, view.scale);
 
-  const { polygons, N } = map;
+  const { polygons, N, biome } = map;
+
+  // resolve tile-texture patterns: per-biome (theme) overrides a global one
+  const themeTex = style.textures || {};
+  const globalTex = options.texture && options.texture !== 'none' ? options.texture : null;
+  const pats = {};
+  const patFor = (type) => {
+    if (!type || type === 'none') return null;
+    if (!(type in pats)) pats[type] = makePattern(ctx, type);
+    return pats[type];
+  };
 
   for (let i = 0; i < N; i++) {
     const poly = polygons[i];
@@ -133,6 +144,8 @@ export function draw(ctx, map, view, options = {}) {
     const r = c[0] * s, g = c[1] * s, b = c[2] * s;
     ctx.fillStyle = `rgb(${r < 255 ? r | 0 : 255},${g < 255 ? g | 0 : 255},${b < 255 ? b | 0 : 255})`;
     ctx.fill();
+    const pat = patFor(themeTex[biome[i]] || globalTex);
+    if (pat) { ctx.fillStyle = pat; ctx.fill(); }
     if (options.showCells) {
       ctx.lineWidth = 0.4 / view.scale;
       ctx.strokeStyle = 'rgba(0,0,0,0.14)';

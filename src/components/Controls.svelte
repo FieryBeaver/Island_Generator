@@ -1,6 +1,7 @@
 <script>
   import { PIN_TYPES } from '../lib/icons.js';
   import { STYLES, isCustom } from '../lib/styles.js';
+  import { TEXTURES } from '../lib/texture.js';
   import ThemeBuilder from './ThemeBuilder.svelte';
   import {
     store, regenerate, randomizeSeed, autoSettlements, clearPins, removePin,
@@ -112,6 +113,10 @@
     <select id="shading" bind:value={store.options.shading}>
       <option value="flat">Flat (solid biome)</option>
       <option value="gradient">Gradient (blended)</option>
+    </select>
+    <label for="texture">Tile texture</label>
+    <select id="texture" bind:value={store.options.texture}>
+      {#each TEXTURES as t}<option value={t.id}>{t.label}</option>{/each}
     </select>
     <details class="deco">
       <summary>Decorations: <b>{decoSummary}</b></summary>

@@ -1,5 +1,6 @@
 <script>
   import { THEME_PALETTE_KEYS } from '../lib/styles.js';
+  import { TEXTURES } from '../lib/texture.js';
   import { store, themeChanged, exportTheme, deleteTheme } from '../lib/store.svelte.js';
 
   // the active custom theme (a reactive element of store.themes)
@@ -52,13 +53,19 @@
       <label class="full">Pin tint<input type="color" bind:value={theme.pin.monochrome} oninput={ch} /></label>
     {/if}
 
-    <h3>Biome palette</h3>
+    <h3>Biome palette &amp; textures</h3>
     <div class="palette">
       {#each THEME_PALETTE_KEYS as key}
-        <label class="sw">
+        <div class="sw">
           <input type="color" bind:value={theme.palette[key]} oninput={ch} />
           <span>{pretty(key)}</span>
-        </label>
+          <select
+            value={theme.textures[key] || 'none'}
+            onchange={(e) => { theme.textures[key] = e.currentTarget.value; ch(); }}
+          >
+            {#each TEXTURES as t}<option value={t.id}>{t.label}</option>{/each}
+          </select>
+        </div>
       {/each}
     </div>
   </div>
@@ -80,8 +87,9 @@
   .chk, .chk2 { display: flex; align-items: center; gap: 6px; color: var(--ink); cursor: pointer; margin-top: 8px; }
   .chk2 { margin-top: 22px; }
   h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--accent); margin: 14px 0 4px; }
-  .palette { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; max-height: 240px; overflow-y: auto; padding-right: 4px; }
+  .palette { display: flex; flex-direction: column; gap: 5px; max-height: 280px; overflow-y: auto; padding-right: 4px; }
   .sw { display: flex; align-items: center; gap: 6px; margin: 0; }
-  .sw input[type='color'] { width: 30px; height: 22px; flex: 0 0 auto; }
-  .sw span { font-size: 10px; color: var(--muted); line-height: 1.1; }
+  .sw input[type='color'] { width: 28px; height: 22px; flex: 0 0 auto; padding: 0; }
+  .sw span { font-size: 10px; color: var(--muted); line-height: 1.1; flex: 1; min-width: 0; }
+  .sw select { flex: 0 0 auto; width: 92px; font-size: 10px; padding: 3px 4px; }
 </style>

@@ -112,7 +112,7 @@
     store.map; store.revision;
     store.view.scale; store.view.x; store.view.y; store.style;
     store.options.showRivers; store.options.showCoast; store.options.showCells; store.options.shading;
-    store.options.forests; store.options.grass; store.options.contours; store.themeRev;
+    store.options.forests; store.options.grass; store.options.contours; store.options.texture; store.themeRev;
     render();
   });
 

@@ -22,7 +22,7 @@ export const store = $state({
   themes: [], // custom user themes (persisted)
   themeRev: 0, // bump to force a recolour when a custom theme is edited
   brush: { size: 55, strength: 0.14, biome: 'GRASSLAND' },
-  options: { showRivers: true, showCoast: true, showCells: false, shading: 'flat', forests: true, grass: false, contours: false },
+  options: { showRivers: true, showCoast: true, showCells: false, shading: 'flat', forests: true, grass: false, contours: false, texture: 'none' },
   selectedPin: null,
   generating: false,
   api: null, // set by MapView: { fitView, exportPng }

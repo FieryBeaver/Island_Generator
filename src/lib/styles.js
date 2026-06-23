@@ -138,6 +138,7 @@ export function makeTheme(id, label, fromId) {
     contour: (src && src.contour) || 'rgba(40,30,15,0.45)',
     paper: !!(src && src.paper),
     palette,
+    textures: { ...(src && src.textures ? src.textures : {}) }, // per-biome tile textures
     pin: { font: '600 11px Segoe UI, sans-serif', shadow: true, monochrome: null, labelColor: '#ffffff' },
     __rev: 0,
   };
